@@ -13,8 +13,10 @@ Language: en-GB
 URL: https://github.com/reside-ic/repobuilder
 BugReports: https://github.com/reside-ic/repobuilder/issues
 Imports:
-    gert,
-    pkgdepends
+    pkgbuilder,
+    pkgdepends,
+    withr,
+    yaml
 Suggests:
     testthat
 RoxygenNote: 7.1.1
