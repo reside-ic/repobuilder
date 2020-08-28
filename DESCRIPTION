@@ -20,4 +20,4 @@ Suggests:
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 Remotes:
-    r-lib/pkgbuilder@for-repobuilder
+    mrc-ide/pkgbuilder@for-repobuilder
