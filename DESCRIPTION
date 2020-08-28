@@ -1,0 +1,22 @@
+Package: repobuilder
+Title: Build Binary Packages
+Version: 0.0.1
+Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
+                    email = "rich.fitzjohn@gmail.com"),
+             person("Imperial College of Science, Technology and Medicine",
+                    role = "cph"))
+Description: Automate building repositories.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Language: en-GB
+URL: https://github.com/mrc-ide/repobuilder
+BugReports: https://github.com/mrc-ide/repobuilder/issues
+Imports:
+    pkgdepends,
+Suggests:
+    testthat
+RoxygenNote: 7.1.1
+Roxygen: list(markdown = TRUE)
+Remotes:
+    r-lib/pkgdepends

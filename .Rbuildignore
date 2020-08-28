@@ -1,0 +1,7 @@
+^scripts$
+^Makefile$
+^README\.Rmd$
+^\.travis\.yml$
+^docs$
+^\.lintr$
+^\.github$
