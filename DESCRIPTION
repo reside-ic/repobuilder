@@ -22,4 +22,5 @@ Suggests:
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 Remotes:
+    r-lib/pkgdepends,
     mrc-ide/pkgbuilder@for-repobuilder
