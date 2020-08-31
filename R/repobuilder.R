@@ -136,8 +136,7 @@ check_prev <- function(prev, packages) {
 }
 
 
-build_packages <- function(packages, dest, lib, binary, workdir) {
-  dir_create(file.path(workdir, dest))
+build_packages <- function(packages, lib, binary, workdir, dest = "packages") {
   for (i in seq_along(packages)) {
     p <- packages[[i]]
     if (p$build) {
@@ -147,17 +146,9 @@ build_packages <- function(packages, dest, lib, binary, workdir) {
     }
   }
 
-  yaml::write_yaml(packages, file.path(workdir, dest, "packages.yml"))
-}
-
-
-build_source_packages <- function(packages, lib, workdir) {
-  dest <- package_type(FALSE)
-  build_packages(packages, dest, lib, FALSE, workdir)
-}
-
-
-build_binary_packages <- function(packages, lib, workdir) {
-  dest <- file.path("bin", package_type(TRUE), r_version2())
-  build_packages(packages, dest, lib, TRUE, workdir)
+  dat <- list(type = package_type(binary),
+              version = r_version2(),
+              packages = packages)
+  yaml::write_yaml(dat, file.path(workdir, dest, "packages.yml"))
+  invisible(dest)
 }
