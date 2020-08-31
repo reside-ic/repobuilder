@@ -17,3 +17,10 @@ gha_binaries <- function() {
   lib <- prepare_library(packages, workdir)
   build_packages(packages, lib, TRUE, workdir)
 }
+
+
+gha_site <- function() {
+  workdir <- "gha"
+  dest <- "gh-pages"
+  update_site(workdir, dest)
+}

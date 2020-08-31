@@ -4,26 +4,17 @@
 ## site. Neither are great given the quality of the tools we can
 ## easily pull on here.  However, we might do it in the shell commands
 ## before
-fetch_previous_index <- function(repo = ".") {
-  ## if (!("origin/gh-pages" %in% gert::git_branch_list(repo)$name)) {
-  ##   return(NULL)
-  ## }
+fetch_previous_index <- function(path = ".") {
+  if (has_gh_pages(path)) {
+    gert::git_branch_create("gh-pages", "origin/gh-pages", FALSE, path)
+    gert::git_clone(path, "gh-pages", "gh-pages")
+    prev <- yaml::read_yaml("gh-pages/packages.yml")
+  } else {
+    prev <- NULL
+  }
 
-  ## ## TODO: this can fail for lots of reasons, none fun to catch and
-  ## ## some are fine as errors.
-  ## prev <- suppressWarnings(
-  ##   system2("git", c("show", "origin/gh-pages:repobuilder.yml"),
-  ##           stdout = TRUE, stderr = TRUE))
-  ## code <- attr(prev, "status")
-  ## if (code != 0) {
-  ##   return(NULL)
-  ## }
-
-  ## yaml::yaml.load(prev)
-  ## Just for now
-  return(NULL)
+  prev
 }
-
 
 
 read_config <- function(filename) {
@@ -112,26 +103,42 @@ build_package <- function(path, dest, lib, ..., vignettes = FALSE) {
   dir_create(dest)
   withr::with_libpaths(
     lib,
-    pkgbuild::build(path, dest, ..., vignettes = vignettes))
+    basename(pkgbuild::build(path, dest, ..., vignettes = vignettes)))
 }
 
 
 check_prev <- function(prev, packages) {
+  prev <- data.frame(
+    package = vcapply(prev, "[[", "package"),
+    version = numeric_version(vcapply(prev, "[[", "version")),
+    sha256 = vcapply(prev, "[[", "sha256"),
+    stringsAsFactors = FALSE)
+  prev <- prev[order(prev$package, prev$version), ]
+  rownames(prev) <- NULL
+
   for (p in names(packages)) {
-    prev_version <- package_version(prev[[p]] %||% "0.0.0")
+    prev_p <- prev[prev$package == p, ]
+    if (nrow(prev_p) == 0L) {
+      prev_version <- numeric_version("0.0.0")
+      prev_sha256 <- NA_character_
+    } else {
+      prev_version <- prev_p$version[nrow(prev_p)]
+      prev_sha256 <- prev_p$sha256[nrow(prev_p)]
+    }
+
     curr_version <- package_version(packages[[p]]$version)
     packages[[p]]$build <- curr_version > prev_version
     if (curr_version < prev_version) {
       stop(sprintf("Version of '%s' has decreased from '%s' to '%s'",
                    p, prev_version, curr_version))
     }
-    if (curr_version == prev_version && prev[[p]]$sha256 != curr[[p]]) {
-      ## Perhaps too strict?
+    if (curr_version == prev_version && prev_sha256 != packages[[p]]$sha256) {
       stop(sprintf(
         "Version of '%s' has not changed, but source has (%s => %s)",
-        p, prev[[p]]$sha256, curr[[p]]$sha256))
+        p, prev_sha256, packages[[p]]$sha256))
     }
   }
+
   packages
 }
 
