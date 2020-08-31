@@ -15,5 +15,5 @@ gha_binaries <- function() {
   workdir <- "gha"
   packages <- yaml::read_yaml(file.path(workdir, "src", "packages.yml"))
   lib <- prepare_library(packages, workdir)
-  build_binary_packages(packages, lib, TRUE, workdir)
+  build_packages(packages, lib, TRUE, workdir)
 }
