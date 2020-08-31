@@ -1,13 +1,5 @@
 update_site <- function(workdir, dest) {
-  path <- "."
-  if (has_gh_pages(path)) {
-    gert::git_branch_create("gh-pages", "origin/gh-pages", FALSE, path)
-    gert::git_clone(path, dest, "gh-pages")
-  } else {
-    gert::git_init(dest)
-    system2("git", c("-C", dest, "checkout", "--orphan", "gh-pages"))
-  }
-  init_repo(file.path(path, dest))
+  init_repo(dest)
 
   ## Look at all the binary directories:
   paths <- c(file.path(workdir, "sources", "packages"),
