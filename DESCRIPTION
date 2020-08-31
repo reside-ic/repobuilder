@@ -13,7 +13,9 @@ Language: en-GB
 URL: https://github.com/reside-ic/repobuilder
 BugReports: https://github.com/reside-ic/repobuilder/issues
 Imports:
-    pkgbuilder,
+    desc,
+    gert,
+    ids,
     pkgdepends,
     withr,
     yaml
@@ -22,5 +24,4 @@ Suggests:
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 Remotes:
-    r-lib/pkgdepends,
-    mrc-ide/pkgbuilder@for-repobuilder
+    r-lib/pkgdepends
