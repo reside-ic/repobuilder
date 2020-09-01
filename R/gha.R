@@ -22,7 +22,7 @@ gha_binaries <- function() {
 gha_site <- function() {
   workdir <- "gha"
   gh_pages_prep()
-  update_site(workdir, dest)
+  update_site(workdir, ".")
 }
 
 
