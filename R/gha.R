@@ -5,6 +5,15 @@ gha_source <- function() {
   packages <- download_sources(config$packages, workdir)
   packages <- check_prev(prev, packages)
   yaml::write_yaml(packages, file.path(workdir, "src", "packages.yml"))
+  build <- any(vlapply(packages, "[[", "build"))
+
+  cat(sprintf("::set-env name=REPOBUILDER_BUILD::%s\n",
+              as.character(build)))
+
+  if (!build) {
+    message("Nothing to update!")
+    return()
+  }
 
   lib <- prepare_library(packages, workdir)
   build_packages(packages, lib, FALSE, workdir)
@@ -14,6 +23,13 @@ gha_source <- function() {
 gha_binaries <- function() {
   workdir <- "gha"
   packages <- yaml::read_yaml(file.path(workdir, "src", "packages.yml"))
+  build <- any(vlapply(packages, "[[", "build"))
+
+  if (!build) {
+    message("Nothing to update!")
+    return()
+  }
+
   lib <- prepare_library(packages, workdir)
   build_packages(packages, lib, TRUE, workdir)
 }
