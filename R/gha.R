@@ -21,25 +21,20 @@ gha_binaries <- function() {
 
 gha_site <- function() {
   workdir <- "gha"
-  dest <- "gh-pages"
-  gh_site_prep(".", dest)
+  gh_pages_prep()
   update_site(workdir, dest)
 }
 
 
-gh_site_prep <- function(path, dest) {
-  if (has_gh_pages(path)) {
-    gert::git_branch_create("gh-pages", "origin/gh-pages", FALSE, repo = path)
-    gert::git_clone(path, dest, "gh-pages")
-    gert::git_remote_remove("origin", repo = dest)
+gh_pages_prep <- function() {
+  if (has_gh_pages(".")) {
+    gert::git_branch_create("gh-pages", "origin/gh-pages", TRUE)
   } else {
-    gert::git_init(dest)
     ## Not yet supported in gert:
-    processx::run("git", c("-C", dest, "checkout", "--orphan", "gh-pages"))
+    processx::run("git", c("checkout", "--orphan", "gh-pages"))
+    ## gert's rm does not remove enough
+    processx::run("git", c("rm", "-rf", "--quiet", "."))
+    ## gert's commit requires at least one file present
+    processx::run("git", c("commit", "--allow-empty", "-m", "gh-pages root"))
   }
-  url <- gert::git_remote_list(path)$url
-  gert::git_remote_add("origin", url, repo = dest)
-
-  gert::git_config_set("user.email", "actions@github.com", repo = dest)
-  gert::git_config_set("user.name", "GitHub Actions", repo = dest)
 }
