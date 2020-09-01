@@ -17,6 +17,7 @@ Imports:
     gert,
     ids,
     pkgdepends,
+    processx,
     withr,
     yaml
 Suggests:
