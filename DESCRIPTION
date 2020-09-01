@@ -13,6 +13,7 @@ Language: en-GB
 URL: https://github.com/mrc-ide/repobuilder
 BugReports: https://github.com/mrc-ide/repobuilder/issues
 Imports:
+    gert,
     pkgdepends,
 Suggests:
     testthat
