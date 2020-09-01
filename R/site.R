@@ -1,4 +1,4 @@
-update_site <- function(workdir, dest) {
+rb_build_site <- function(workdir, dest) {
   init_repo(dest)
 
   ## Look at all the binary directories:
@@ -26,10 +26,11 @@ update_site <- function(workdir, dest) {
   yml <- c(prev, lapply(unname(dat), function(x)
     x[c("package", "version", "sha256", "ref")]))
   yaml::write_yaml(yml, file.path(dest, "packages.yml"))
+}
 
-  ## Finally, we'd build a landing page here, but that can wait
 
-  ## Nice commit message
+rb_update_site <- function(workdir, path) {
+  dat <- yaml::read_yaml(file.path(workdir, "sources", "src", "packages.yml"))
   msg <- c(sprintf("Updated %s", paste(names(dat), collapse = ", ")),
     "",
     sprintf("  * %s %s @ %s",
@@ -37,43 +38,21 @@ update_site <- function(workdir, dest) {
             vcapply(dat, "[[", "version"),
             substr(vcapply(dat, "[[", "sha256"), 1, 7)))
 
-  gert::git_add(c("packages.yml", "bin", "contrib"), repo = dest)
-  gert::git_commit(paste(msg, collapse = "\n"), repo = dest)
-}
-
-
-contrib_url <- function(path, type, version) {
-  if (type == "source") {
-    file.path(path, "contrib", "src")
-  } else {
-    platform <- switch(type,
-                       "win.binary" = "windows",
-                       "mac.binary" = "macosx",
-                       "mac.binary.mavericks" = "macosx/mavericks",
-                       "mac.binary.el-capitan" = "macosx/el-capitan")
-    file.path(path, "bin", platform, "contrib", version)
-  }
-}
-
-
-has_gh_pages <- function(repo = ".") {
-  "origin/gh-pages" %in% gert::git_branch_list(repo)$name
+  gert::git_add(c("packages.yml", "bin", "contrib"), repo = path)
+  gert::git_commit(paste(msg, collapse = "\n"), repo = path)
 }
 
 
 init_repo <- function(path) {
-  ## TODO: Hit metacran or something here to get the current R version
-  ## so that this can be bumped.  3.5 should last for the next year or
-  ## so though.
-  dir_create(contrib_url(path, "source"))
+  dir_create(contrib_url(path, "source", NULL))
 
-  platforms <- c("windows", "macosx", "macosx/mavericks",
-                     "macosx/el-capitan")
+  platforms <- c("win.binary", "mac.binary", "mac.binary.mavericks",
+                 "mac.binary.el-capitan")
   versions <- c("3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "4.0")
 
   for (platform in platforms) {
     for (version in versions) {
-      p <- file.path(path, "bin", platform, "contrib", version)
+      p <- contrib_url(path, platform, version)
       pp <- file.path(p, "PACKAGES")
       ppz <- paste0(pp, ".gz")
       dir_create(p)
@@ -81,17 +60,10 @@ init_repo <- function(path) {
         writeLines(character(0), pp)
       }
       if (!file.exists(ppz)) {
-        writeLines_gz(character(0), ppz)
+        write_lines_gz(character(0), ppz)
       }
     }
   }
 
   path
-}
-
-
-writeLines_gz <- function(text, filename, ...) {
-  con <- gzfile(filename)
-  on.exit(close(con))
-  writeLines(text, con, ...)
 }

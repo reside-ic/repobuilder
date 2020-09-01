@@ -62,3 +62,29 @@ git_run <- function(args, repo, check = TRUE) {
 squote <- function(x) {
   sprintf("'%s'", x)
 }
+
+
+has_gh_pages <- function(repo = ".") {
+  "origin/gh-pages" %in% gert::git_branch_list(repo)$name
+}
+
+
+write_lines_gz <- function(text, filename, ...) {
+  con <- gzfile(filename)
+  on.exit(close(con))
+  writeLines(text, con, ...)
+}
+
+
+contrib_url <- function(path, type, version) {
+  if (type == "source") {
+    file.path(path, "contrib", "src")
+  } else {
+    platform <- switch(type,
+                       "win.binary" = "windows",
+                       "mac.binary" = "macosx",
+                       "mac.binary.mavericks" = "macosx/mavericks",
+                       "mac.binary.el-capitan" = "macosx/el-capitan")
+    file.path(path, "bin", platform, "contrib", version)
+  }
+}

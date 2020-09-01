@@ -1,56 +1,30 @@
 gha_source <- function() {
-  config <- read_config("repobuilder.yml")
   prev <- fetch_previous_index(".")
-  workdir <- "gha"
-  packages <- download_sources(config$packages, workdir)
-  packages <- check_packages_version(packages, prev)
-  yaml::write_yaml(packages, file.path(workdir, "src", "packages.yml"))
-  build <- any(vlapply(packages, "[[", "build"))
-
-  writeLines(as.character(build),
-             file.path(workdir, "src", "build"))
-
-  if (!build) {
-    message("Nothing to update!")
-    return()
-  }
-
-  lib <- prepare_library(packages, workdir)
-  build_packages(packages, lib, FALSE, workdir)
+  rb_build_source("repobuilder.yml", "gha", prev)
 }
 
 
 gha_binaries <- function() {
-  workdir <- "gha"
-  packages <- yaml::read_yaml(file.path(workdir, "src", "packages.yml"))
-  build <- any(vlapply(packages, "[[", "build"))
-
-  if (!build) {
-    message("Nothing to update!")
-    return()
-  }
-
-  lib <- prepare_library(packages, workdir)
-  build_packages(packages, lib, TRUE, workdir)
+  rb_build_binaries("gha")
 }
 
 
 gha_site <- function() {
-  workdir <- "gha"
-  gh_pages_prep()
-  update_site(workdir, ".")
+  gh_pages_prep(".")
+  rb_build_site("gha", ".")
+  rb_update_site("gha", ".")
 }
 
 
-gh_pages_prep <- function() {
-  if (has_gh_pages(".")) {
-    gert::git_branch_create("gh-pages", "origin/gh-pages", TRUE)
+gh_pages_prep <- function(path) {
+  if (has_gh_pages(path)) {
+    gert::git_branch_create("gh-pages", "origin/gh-pages", TRUE, path)
   } else {
     ## Not yet supported in gert:
-    git_run(c("checkout", "--orphan", "gh-pages"), ".")
+    git_run(c("checkout", "--orphan", "gh-pages"), path)
     ## gert's rm does not remove enough
-    git_run(c("rm", "-rf", "--quiet", "."), ".")
+    git_run(c("rm", "-rf", "--quiet", path), path)
     ## gert's commit requires at least one file present
-    git_run(c("commit", "--allow-empty", "-m", "gh-pages root"), ".")
+    git_run(c("commit", "--allow-empty", "-m", "gh-pages root"), path)
   }
 }
