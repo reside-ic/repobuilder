@@ -28,3 +28,58 @@ test_that("Do not overwrite index files with contents", {
   expect_equal(readLines(file.path(p, "PACKAGES")), contents)
   expect_equal(readLines(file.path(p, "PACKAGES.gz")), contents)
 })
+
+
+test_that("Can update site", {
+  path <- tempfile()
+  workdir <- tempfile()
+  dat <- list(a = list(version = "1.2.3", sha256 = "abc"),
+              b = list(version = "2.3.4", sha256 = "def"))
+  msg <- commit_message(dat)
+
+  mock_read_yaml <- mockery::mock(dat)
+  mock_git_add <- mockery::mock()
+  mock_git_commit <- mockery::mock()
+  with_mock(
+    "yaml::read_yaml" = mock_read_yaml,
+    "gert::git_add" = mock_git_add,
+    "gert::git_commit" = mock_git_commit,
+    rb_update_site(workdir, path))
+
+  mockery::expect_called(mock_read_yaml, 1)
+  expect_equal(
+    mockery::mock_args(mock_read_yaml)[[1]],
+    list(file.path(workdir, "sources", "src", "packages.yml")))
+
+  mockery::expect_called(mock_git_add, 1)
+  expect_equal(
+    mockery::mock_args(mock_git_add)[[1]],
+    list(c("packages.yml", "bin", "contrib"), repo = path))
+
+  mockery::expect_called(mock_git_commit, 1)
+  expect_equal(
+    mockery::mock_args(mock_git_commit)[[1]],
+    list(msg, repo = path))
+})
+
+
+test_that("construct sensible commit message", {
+  dat <- list(a = list(version = "1.2.3", sha256 = "abc"),
+              b = list(version = "2.3.4", sha256 = "def"))
+  expect_equal(
+    commit_message(dat[1]),
+    paste(
+      "Updated a",
+      "",
+      "  * a 1.2.3 @ abc",
+      sep = "\n"))
+
+  expect_equal(
+    commit_message(dat),
+    paste(
+      "Updated a, b",
+      "",
+      "  * a 1.2.3 @ abc",
+      "  * b 2.3.4 @ def",
+      sep = "\n"))
+})

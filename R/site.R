@@ -1,7 +1,9 @@
 rb_build_site <- function(workdir, dest) {
   init_repo(dest)
 
-  ## Look at all the binary directories:
+  ## Look at all the binary directories. Unfortunately, this is pretty
+  ## tightly tied to how the gha lays out the artefacts for now. In
+  ## particular, sources contains an extra path layer here.
   paths <- c(file.path(workdir, "sources", "packages"),
              dir(workdir, pattern = "^binaries-", full.names = TRUE))
 
@@ -31,15 +33,21 @@ rb_build_site <- function(workdir, dest) {
 
 rb_update_site <- function(workdir, path) {
   dat <- yaml::read_yaml(file.path(workdir, "sources", "src", "packages.yml"))
-  msg <- c(sprintf("Updated %s", paste(names(dat), collapse = ", ")),
-    "",
-    sprintf("  * %s %s @ %s",
-            names(dat),
-            vcapply(dat, "[[", "version"),
-            substr(vcapply(dat, "[[", "sha256"), 1, 7)))
-
+  msg <- commit_message(dat)
   gert::git_add(c("packages.yml", "bin", "contrib"), repo = path)
-  gert::git_commit(paste(msg, collapse = "\n"), repo = path)
+  gert::git_commit(msg, repo = path)
+}
+
+
+commit_message <- function(dat) {
+  paste(
+    c(sprintf("Updated %s", paste(names(dat), collapse = ", ")),
+      "",
+      sprintf("  * %s %s @ %s",
+              names(dat),
+              vcapply(dat, "[[", "version"),
+              substr(vcapply(dat, "[[", "sha256"), 1, 7))),
+    collapse = "\n")
 }
 
 
