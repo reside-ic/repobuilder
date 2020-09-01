@@ -25,7 +25,10 @@ package_type <- function(binary, sysname = Sys.info()[["sysname"]]) {
 
 
 file_copy <- function(from, to) {
-  stopifnot(file.copy(from, to, overwrite = TRUE))
+  ok <- file.copy(from, to, overwrite = TRUE)
+  if (!all(ok)) {
+    stop("Error copying files")
+  }
 }
 
 
@@ -36,11 +39,6 @@ assert_named <- function (x, unique = FALSE, name = deparse(substitute(x))) {
   if (unique && any(duplicated(names(x)))) {
     stop(sprintf("'%s' must have unique names", name), call. = FALSE)
   }
-}
-
-
-file_copy <- function(from, to) {
-  stopifnot(file.copy(from, to, overwrite = TRUE))
 }
 
 
