@@ -57,3 +57,8 @@ dir_create <- function(path) {
 git_run <- function(args, repo, check = TRUE) {
   processx::run("git", c("-C", repo, args), error_on_status = check)
 }
+
+
+squote <- function(x) {
+  sprintf("'%s'", x)
+}

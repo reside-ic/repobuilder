@@ -66,7 +66,10 @@ download_sources <- function(packages, workdir) {
   ret <- lapply(packages, download_source, workdir)
   names(ret) <- vcapply(ret, "[[", "package")
   if (any(duplicated(names(ret)))) {
-    stop("Duplicate package!")
+    ## Could do much better with the error here, but not super likely
+    ## in practice.
+    dups <- unique(names(ret)[duplicated(names(ret))])
+    stop(sprintf("Duplicate package %s", paste(squote(dups), collapse = ", ")))
   }
   ret
 }

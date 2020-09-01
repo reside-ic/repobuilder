@@ -235,3 +235,35 @@ test_that("build_packages updates package names", {
     mockery::mock_args(mock_build_package)[[1]],
     list(packages[[1]]$path, "packages", lib, binary = binary))
 })
+
+
+test_that("download_sources checks for duplicate package names", {
+  packages <- list("user/repo1" = NULL,
+                   "user/repo2" = NULL)
+  workdir <- tempfile()
+  mock_download_source <- mockery::mock(list(package = "a"),
+                                        list(package = "a"))
+
+  with_mock(
+    "repobuilder:::download_source" = mock_download_source,
+    expect_error(
+      download_sources(packages, workdir),
+      "Duplicate package 'a'"))
+})
+
+
+test_that("download_sources checks for duplicate package names", {
+  packages <- list("user/repo1" = NULL,
+                   "user/repo2" = NULL)
+  workdir <- tempfile()
+  mock_download_source <- mockery::mock(list(package = "repo1"),
+                                        list(package = "repo2"))
+
+  res <- with_mock(
+    "repobuilder:::download_source" = mock_download_source,
+    download_sources(packages, workdir))
+
+  expect_equal(res,
+               list(repo1 = list(package = "repo1"),
+                    repo2 = list(package = "repo2")))
+})
