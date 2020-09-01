@@ -141,13 +141,16 @@ check_packages_version <- function(packages, prev) {
 }
 
 
-build_packages <- function(packages, lib, binary, workdir, dest = "packages") {
+build_packages <- function(packages, lib, binary, workdir) {
+  dest <- "packages"
+  dir_create(file.path(workdir, dest))
+
   for (i in seq_along(packages)) {
     p <- packages[[i]]
     if (p$build) {
       packages[[i]]$filename <- withr::with_dir(
         workdir,
-        build_package(p$path, dest, lib, binary = binary))
+        basename(build_package(p$path, dest, lib, binary = binary)))
     }
   }
 
@@ -155,7 +158,7 @@ build_packages <- function(packages, lib, binary, workdir, dest = "packages") {
               version = r_version2(),
               packages = packages)
   yaml::write_yaml(dat, file.path(workdir, dest, "packages.yml"))
-  invisible(dest)
+  invisible(dat)
 }
 
 
@@ -163,5 +166,5 @@ build_package <- function(path, dest, lib, ..., vignettes = FALSE) {
   dir_create(dest)
   withr::with_libpaths(
     lib,
-    basename(pkgbuild::build(path, dest, ..., vignettes = vignettes)))
+    pkgbuild::build(path, dest, ..., vignettes = vignettes))
 }

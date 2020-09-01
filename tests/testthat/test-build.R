@@ -181,3 +181,57 @@ test_that("Can set git reference", {
     mockery::mock_args(mock_desc)[[1]],
     list(file = file.path(workdir, "src", path)))
 })
+
+
+test_that("build_package sets .libPaths()", {
+  mock_build <- mockery::mock(.libPaths())
+
+  path <- tempfile()
+  dest <- tempfile()
+  lib <- tempfile()
+  dir_create(lib)
+  on.exit(unlink(lib, recursive = TRUE))
+
+  res <- with_mock(
+    "pkgbuild::build" = mock_build,
+    build_package(path, dest, lib))
+
+  expect_true(same_path(res[[1]], lib))
+  mockery::expect_called(mock_build, 1)
+
+  expect_equal(mockery::mock_args(mock_build)[[1]],
+               list(path, dest, vignettes = FALSE))
+})
+
+
+test_that("build_packages updates package names", {
+  packages <- list(
+    a = list(
+      build = TRUE,
+      path = tempfile()),
+    b = list(
+      build = FALSE,
+      path = tempfile()))
+
+  workdir <- tempfile()
+  lib <- tempfile()
+  binary <- FALSE
+
+  dir_create(workdir)
+  dir_create(lib)
+
+  mock_build_package <- mockery::mock("path/to/a_0.1.2.tar.gz")
+  res <- with_mock(
+    "repobuilder:::build_package" = mock_build_package,
+    build_packages(packages, lib, binary, workdir))
+
+  expect_equal(res$type, "source")
+  expect_equal(res$version, r_version2())
+  expect_equal(res$packages$a, c(packages[[1]], filename = "a_0.1.2.tar.gz"))
+  expect_equal(res$packages$b, packages[[2]])
+
+  mockery::expect_called(mock_build_package, 1)
+  expect_equal(
+    mockery::mock_args(mock_build_package)[[1]],
+    list(packages[[1]]$path, "packages", lib, binary = binary))
+})
