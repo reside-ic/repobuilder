@@ -186,3 +186,55 @@ test_that("Can copy files into site", {
     mockery::mock_args(mock_write_packages)[[1]],
     list(dest_src, "source"))
 })
+
+
+test_that("Create gh pages branch if missing", {
+  mock_has_gh_pages <- mockery::mock(FALSE)
+  mock_git_branch_create <- mockery::mock()
+  mock_git_run <- mockery::mock()
+  path <- tempfile()
+  with_mock(
+    "repobuilder:::has_gh_pages" = mock_has_gh_pages,
+    "repobuilder:::git_run" = mock_git_run,
+    "gert::git_branch_create" = mock_git_branch_create,
+    gh_pages_prep(path))
+
+  mockery::expect_called(mock_has_gh_pages, 1)
+  expect_equal(mockery::mock_args(mock_has_gh_pages)[[1]], list(path))
+
+  mockery::expect_called(mock_git_branch_create, 0)
+
+  mockery::expect_called(mock_git_run, 3)
+
+  expect_equal(
+    mockery::mock_args(mock_git_run)[[1]],
+    list(c("checkout", "--orphan", "gh-pages"), path))
+  expect_equal(
+    mockery::mock_args(mock_git_run)[[2]],
+    list(c("rm", "-rf", "--quiet", path), path))
+  expect_equal(
+    mockery::mock_args(mock_git_run)[[3]],
+    list(c("commit", "--allow-empty", "-m", "gh-pages root"), path))
+})
+
+
+test_that("Checkout gh pages branch if present", {
+  mock_has_gh_pages <- mockery::mock(TRUE)
+  mock_git_branch_create <- mockery::mock()
+  mock_git_run <- mockery::mock()
+  path <- tempfile()
+  with_mock(
+    "repobuilder:::has_gh_pages" = mock_has_gh_pages,
+    "repobuilder:::git_run" = mock_git_run,
+    "gert::git_branch_create" = mock_git_branch_create,
+    gh_pages_prep(path))
+
+  mockery::expect_called(mock_has_gh_pages, 1)
+  expect_equal(mockery::mock_args(mock_has_gh_pages)[[1]], list(path))
+
+  mockery::expect_called(mock_git_branch_create, 1)
+  expect_equal(mockery::mock_args(mock_git_branch_create)[[1]],
+               list("gh-pages", "origin/gh-pages", TRUE, path))
+
+  mockery::expect_called(mock_git_run, 0)
+})
