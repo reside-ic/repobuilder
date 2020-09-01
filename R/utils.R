@@ -52,3 +52,8 @@ r_version2 <- function(version = getRversion()) {
 dir_create <- function(path) {
   dir.create(path, FALSE, TRUE)
 }
+
+
+git_run <- function(args, repo, check = TRUE) {
+  processx::run("git", c("-C", repo, args), error_on_status = check)
+}

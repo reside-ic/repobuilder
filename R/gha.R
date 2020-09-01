@@ -3,7 +3,7 @@ gha_source <- function() {
   prev <- fetch_previous_index(".")
   workdir <- "gha"
   packages <- download_sources(config$packages, workdir)
-  packages <- check_prev(prev, packages)
+  packages <- check_packages_version(packages, prev)
   yaml::write_yaml(packages, file.path(workdir, "src", "packages.yml"))
   build <- any(vlapply(packages, "[[", "build"))
 
@@ -47,10 +47,10 @@ gh_pages_prep <- function() {
     gert::git_branch_create("gh-pages", "origin/gh-pages", TRUE)
   } else {
     ## Not yet supported in gert:
-    processx::run("git", c("checkout", "--orphan", "gh-pages"))
+    git_run(c("checkout", "--orphan", "gh-pages"), ".")
     ## gert's rm does not remove enough
-    processx::run("git", c("rm", "-rf", "--quiet", "."))
+    git_run(c("rm", "-rf", "--quiet", "."), ".")
     ## gert's commit requires at least one file present
-    processx::run("git", c("commit", "--allow-empty", "-m", "gh-pages root"))
+    git_run(c("commit", "--allow-empty", "-m", "gh-pages root"), ".")
   }
 }

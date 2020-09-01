@@ -21,6 +21,7 @@ Imports:
     withr,
     yaml
 Suggests:
+    mockery,
     testthat
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)

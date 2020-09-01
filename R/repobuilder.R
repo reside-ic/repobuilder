@@ -5,27 +5,38 @@
 ## easily pull on here.  However, we might do it in the shell commands
 ## before
 fetch_previous_index <- function(path = ".") {
+  prev <- NULL
   if (has_gh_pages(path)) {
-    gert::git_branch_create("gh-pages", "origin/gh-pages", FALSE, path)
-    gert::git_clone(path, "gh-pages", "gh-pages")
-    prev <- yaml::read_yaml("gh-pages/packages.yml")
-  } else {
-    prev <- NULL
+    res <- git_run(c("show", "origin/gh-pages:packages.yml"), path, FALSE)
+    if (res$status == 0L) {
+      prev <- yaml::yaml.load(res$stdout)
+    }
   }
-
   prev
 }
 
 
 read_config <- function(filename) {
-  dat <- yaml::read_yaml(filename)
-  base <- basename(filename)
-  assert_named(dat$packages, unique = TRUE, sprintf("%s:packages", base))
-  for (i in seq_along(dat$packages)) {
+  check_config(yaml::read_yaml(filename))
+}
+
+
+check_config <- function(dat) {
+  if (is.null(dat$packages)) {
+    stop("Expected a section 'packages' in repobuilder.yml")
+  }
+  assert_named(dat$packages, unique = TRUE, "repobuilder.yml:packages")
+  for (i in names(dat$packages)) {
     if (!is.null(dat$packages[[i]])) {
-      stop(sprintf("Options not supported (for %s:packages[%d])", base, i))
+      stop(sprintf("Options not supported (for repobuilder.yml:packages:%s)",
+                   i))
     }
-    dat$packages[[i]] <- pkgdepends::parse_pkg_ref(names(dat$packages)[[i]])
+    dat$packages[[i]] <- pkgdepends::parse_pkg_ref(i)
+    if (dat$packages[[i]]$type != "github") {
+      stop(sprintf(
+        "Only GitHub references supported (for repobuilder.yml:packages:%s)",
+        i))
+    }
   }
   dat
 }
@@ -65,20 +76,13 @@ download_source <- function(ref, workdir) {
   dest <- file.path("src", ids::random_id())
   dest_full <- file.path(workdir, dest)
   dir_create(dest_full)
-  ref$url <- sprintf("https://github.com/%s/%s", ref$username, ref$repo)
-  gert::git_clone(ref$url, dest_full)
+  url <- sprintf("https://github.com/%s/%s", ref$username, ref$repo)
+  gert::git_clone(url, dest_full)
 
   git_ref <- ref$commitish
   if (nzchar(git_ref)) {
     message(sprintf("Checking out ref '%s'", git_ref))
-    git_ref_origin <- paste0("origin/", git_ref)
-    if (git_ref_origin %in% gert::git_branch_list(dest_full)$name) {
-      message(sprintf("Interpreting ref '%s' as branch", git_ref))
-      git_ref <- git_ref_origin
-    }
-    ## branch naming could be alieved if we dropped the .git directory?
-    gert::git_branch_create("pkgbuilder/src")
-    gert::git_reset("hard", git_ref, repo = src)
+    git_run(c("checkout", git_ref, "--"), dest_full)
   }
 
   if (nzchar(ref$subdir)) {
@@ -99,15 +103,7 @@ download_source <- function(ref, workdir) {
 }
 
 
-build_package <- function(path, dest, lib, ..., vignettes = FALSE) {
-  dir_create(dest)
-  withr::with_libpaths(
-    lib,
-    basename(pkgbuild::build(path, dest, ..., vignettes = vignettes)))
-}
-
-
-check_prev <- function(prev, packages) {
+check_packages_version <- function(packages, prev) {
   prev <- data.frame(
     package = vcapply(prev, "[[", "package"),
     version = numeric_version(vcapply(prev, "[[", "version")),
@@ -127,15 +123,17 @@ check_prev <- function(prev, packages) {
     }
 
     curr_version <- package_version(packages[[p]]$version)
+    curr_sha256 <- packages[[p]]$sha256
+
     packages[[p]]$build <- curr_version > prev_version
     if (curr_version < prev_version) {
       stop(sprintf("Version of '%s' has decreased from '%s' to '%s'",
                    p, prev_version, curr_version))
     }
-    if (curr_version == prev_version && prev_sha256 != packages[[p]]$sha256) {
+    if (curr_version == prev_version && prev_sha256 != curr_sha256) {
       stop(sprintf(
         "Version of '%s' has not changed, but source has (%s => %s)",
-        p, prev_sha256, packages[[p]]$sha256))
+        p, prev_sha256, curr_sha256))
     }
   }
 
@@ -158,4 +156,12 @@ build_packages <- function(packages, lib, binary, workdir, dest = "packages") {
               packages = packages)
   yaml::write_yaml(dat, file.path(workdir, dest, "packages.yml"))
   invisible(dest)
+}
+
+
+build_package <- function(path, dest, lib, ..., vignettes = FALSE) {
+  dir_create(dest)
+  withr::with_libpaths(
+    lib,
+    basename(pkgbuild::build(path, dest, ..., vignettes = vignettes)))
 }
