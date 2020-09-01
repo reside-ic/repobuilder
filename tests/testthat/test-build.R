@@ -22,7 +22,7 @@ test_that("can prepare library", {
   mockery::expect_called(mock_new_proposal, 1)
   args <- mockery::mock_args(mock_new_proposal)[[1]]
 
-  expect_equal(args[[1]], sprintf("local::%s/%s", workdir, c("a", "b")))
+  expect_equal(args[[1]], c("user/a", "user/b"))
   expect_equal(args[[2]], list(library = lib, dependencies = TRUE))
 
   ## NOTE: order here not checked but is trivial
