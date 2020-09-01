@@ -10,8 +10,8 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Language: en-GB
-URL: https://github.com/mrc-ide/repobuilder
-BugReports: https://github.com/mrc-ide/repobuilder/issues
+URL: https://github.com/reside-ic/repobuilder
+BugReports: https://github.com/reside-ic/repobuilder/issues
 Imports:
     gert,
     pkgdepends,
