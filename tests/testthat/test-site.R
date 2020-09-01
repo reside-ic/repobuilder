@@ -83,3 +83,35 @@ test_that("construct sensible commit message", {
       "  * b 2.3.4 @ def",
       sep = "\n"))
 })
+
+
+test_that("can update index", {
+  dat1 <- list(
+    a = list(package = "a", version = "1.2.3", sha256 = "abc", ref = "user/a"),
+    b = list(package = "b", version = "2.3.4", sha256 = "def", ref = "user/b"))
+  dat2 <- list(
+    a = list(package = "a", version = "1.2.4", sha256 = "ghi", ref = "user/a"),
+    c = list(package = "c", version = "0.0.1", sha256 = "jkl", ref = "user/c"))
+
+  dest <- tempfile()
+  dir_create(dest)
+  path_index <- file.path(dest, "packages.yml")
+
+  workdir <- tempfile()
+  path_packages <- file.path(workdir, "sources", "src", "packages.yml")
+  dir_create(dirname(path_packages))
+
+  yaml::write_yaml(dat1, path_packages)
+  update_index(workdir, dest)
+
+  expect_equal(
+    yaml::read_yaml(path_index),
+    unname(dat1))
+
+  yaml::write_yaml(dat2, path_packages)
+  update_index(workdir, dest)
+
+  expect_equal(
+    yaml::read_yaml(path_index),
+    c(unname(dat1), unname(dat2)))
+})

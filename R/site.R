@@ -16,18 +16,7 @@ rb_build_site <- function(workdir, dest) {
     tools::write_PACKAGES(pkgdir, type = packages$type, verbose = TRUE)
   }
 
-  ## Sort out the final packages lines too.
-  if (file.exists(file.path(dest, "packages.yml"))) {
-    prev <- yaml::read_yaml(file.path(file.path(dest, "packages.yml")))
-  } else {
-    prev <- NULL
-  }
-
-  ## This has our final say in what was actually done
-  dat <- yaml::read_yaml(file.path(workdir, "sources", "src", "packages.yml"))
-  yml <- c(prev, lapply(unname(dat), function(x)
-    x[c("package", "version", "sha256", "ref")]))
-  yaml::write_yaml(yml, file.path(dest, "packages.yml"))
+  update_index(workdir, dest)
 }
 
 
@@ -48,6 +37,22 @@ commit_message <- function(dat) {
               vcapply(dat, "[[", "version"),
               substr(vcapply(dat, "[[", "sha256"), 1, 7))),
     collapse = "\n")
+}
+
+
+update_index <- function(workdir, path) {
+  ## Sort out the final packages lines too.
+  if (file.exists(file.path(path, "packages.yml"))) {
+    prev <- yaml::read_yaml(file.path(file.path(path, "packages.yml")))
+  } else {
+    prev <- NULL
+  }
+
+  ## This has our final say in what was actually done
+  dat <- yaml::read_yaml(file.path(workdir, "sources", "src", "packages.yml"))
+  yml <- c(prev, lapply(unname(dat), function(x)
+    x[c("package", "version", "sha256", "ref")]))
+  yaml::write_yaml(yml, file.path(path, "packages.yml"))
 }
 
 
