@@ -28,6 +28,11 @@ test_that("can build a local source repo", {
   paths <- vcapply(pkgs_src$packages, "[[", "path")
   expect_true(all(file.exists(file.path(workdir, paths))))
 
+  dir_create(file.path(workdir, "sources"))
+  file.copy(file.path(workdir, "packages"),
+            file.path(workdir, "sources"),
+            recursive = TRUE)
+
   ## This is nasty:
   if (is_mac()) {
     expected <- list(type = "mac.binary", ext = ".tgz")
@@ -41,8 +46,6 @@ test_that("can build a local source repo", {
   pkgs_bin <- yaml::read_yaml(file.path(workdir, "packages", "packages.yml"))
   expect_equal(res_bin, pkgs_bin)
 
-  expected <- list
-
   expect_equal(pkgs_bin$type, expected$type)
   expect_equal(pkgs_bin$version, r_version2())
   expect_setequal(names(pkgs_bin$packages), c("ring", "dde"))
@@ -50,4 +53,24 @@ test_that("can build a local source repo", {
   files <- vcapply(pkgs_bin$packages, "[[", "filename")
   expect_match(files, sprintf("\\%s$", expected$ext), all = TRUE)
   expect_true(all(file.exists(file.path(workdir, "packages", files))))
+
+  file.rename(file.path(workdir, "packages"),
+              file.path(workdir, "binaries-platform-version"))
+
+  dest <- tempfile()
+  rb_build_site(workdir, dest)
+
+  expect_setequal(dir(dest), c("bin", "contrib", "packages.yml"))
+
+  pkgs_index <- yaml::read_yaml(file.path(dest, "packages.yml"))
+  expect_equal(
+    pkgs_index,
+    lapply(unname(pkgs_src$packages), function(x)
+      x[c("package", "version", "sha256", "ref")]))
+
+  files <- sprintf("%s_%s.tar.gz",
+                   vcapply(pkgs_index, function(x) x$package),
+                   vcapply(pkgs_index, function(x) x$version))
+  expect_true(all(file.exists(
+    file.path(contrib_url(dest, "source", NULL), files))))
 })

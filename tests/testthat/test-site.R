@@ -98,20 +98,91 @@ test_that("can update index", {
   path_index <- file.path(dest, "packages.yml")
 
   workdir <- tempfile()
-  path_packages <- file.path(workdir, "sources", "src", "packages.yml")
+  path_packages <- file.path(workdir, "sources", "packages", "packages.yml")
   dir_create(dirname(path_packages))
 
-  yaml::write_yaml(dat1, path_packages)
+  yaml::write_yaml(list(packages = dat1), path_packages)
   update_index(workdir, dest)
 
   expect_equal(
     yaml::read_yaml(path_index),
     unname(dat1))
 
-  yaml::write_yaml(dat2, path_packages)
+  yaml::write_yaml(list(packages = dat2), path_packages)
   update_index(workdir, dest)
 
   expect_equal(
     yaml::read_yaml(path_index),
     c(unname(dat1), unname(dat2)))
+})
+
+
+test_that("building site uses correct directories", {
+  workdir <- tempfile()
+  dest <- tempfile()
+  dir_create(file.path(workdir, "binaries-aaa"))
+  dir_create(file.path(workdir, "binaries-bbb"))
+  dir_create(file.path(workdir, "other"))
+
+  mock_build_site_dir <- mockery::mock()
+  mock_init_repo <- mockery::mock()
+  mock_update_index <- mockery::mock()
+
+  with_mock(
+    "repobuilder:::init_repo" = mock_init_repo,
+    "repobuilder:::build_site_dir" = mock_build_site_dir,
+    "repobuilder:::update_index" = mock_update_index,
+    rb_build_site(workdir, dest))
+
+  mockery::expect_called(mock_init_repo, 1)
+  expect_equal(mockery::mock_args(mock_init_repo)[[1]], list(dest))
+
+  mockery::expect_called(mock_build_site_dir, 3)
+  expect_equal(
+    mockery::mock_args(mock_build_site_dir),
+    list(list(file.path(workdir, "sources", "packages"), dest),
+         list(file.path(workdir, "binaries-aaa"), dest),
+         list(file.path(workdir, "binaries-bbb"), dest)))
+
+  mockery::expect_called(mock_update_index, 1)
+  expect_equal(mockery::mock_args(mock_update_index)[[1]], list(workdir, dest))
+})
+
+
+test_that("Can copy files into site", {
+  dat <- list(
+    type = "source",
+    version = "4.0",
+    packages = list(
+      a = list(package = "a", version = "1.2.3", sha256 = "abc",
+               ref = "user/a", filename = "a_1.2.3.tar.gz"),
+      b = list(package = "b", version = "2.3.4", sha256 = "def",
+               ref = "user/b", filename = "b_2.3.4.tar.gz")))
+
+  path <- tempfile()
+  dest <- tempfile()
+
+  dir_create(path)
+  yaml::write_yaml(dat, file.path(path, "packages.yml"))
+
+  mock_copy <- mockery::mock()
+  mock_write_packages <- mockery::mock()
+
+  with_mock(
+    "repobuilder::file_copy" = mock_copy,
+    "repobuilder::write_packages" = mock_write_packages,
+    build_site_dir(path, dest))
+
+  dest_src <- file.path(dest, "contrib", "src")
+  expect_true(file.exists(dest_src))
+
+  mockery::expect_called(mock_copy, 1)
+  expect_equal(
+    mockery::mock_args(mock_copy)[[1]],
+    list(file.path(path, c("a_1.2.3.tar.gz", "b_2.3.4.tar.gz")), dest_src))
+
+  mockery::expect_called(mock_write_packages, 1)
+  expect_equal(
+    mockery::mock_args(mock_write_packages)[[1]],
+    list(dest_src, "source"))
 })

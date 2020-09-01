@@ -86,3 +86,8 @@ contrib_url <- function(path, type, version) {
     file.path(path, "bin", platform, "contrib", version)
   }
 }
+
+
+write_packages <- function(path, type) {
+  tools::write_PACKAGES(path, type = type, verbose = TRUE)
+}

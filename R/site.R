@@ -8,12 +8,7 @@ rb_build_site <- function(workdir, dest) {
              dir(workdir, pattern = "^binaries-", full.names = TRUE))
 
   for (p in paths) {
-    packages <- yaml::read_yaml(file.path(p, "packages.yml"))
-    nms <- basename(vcapply(packages$packages, "[[", "filename"))
-    pkgdir <- contrib_url(dest, packages$type, packages$version)
-    dir_create(pkgdir)
-    file_copy(file.path(p, nms), pkgdir)
-    tools::write_PACKAGES(pkgdir, type = packages$type, verbose = TRUE)
+    build_site_dir(p, dest)
   }
 
   update_index(workdir, dest)
@@ -25,6 +20,16 @@ rb_update_site <- function(workdir, path) {
   msg <- commit_message(dat)
   gert::git_add(c("packages.yml", "bin", "contrib"), repo = path)
   gert::git_commit(msg, repo = path)
+}
+
+
+build_site_dir <- function(path, dest) {
+  packages <- yaml::read_yaml(file.path(path, "packages.yml"))
+  nms <- basename(vcapply(packages$packages, "[[", "filename"))
+  pkgdir <- contrib_url(dest, packages$type, packages$version)
+  dir_create(pkgdir)
+  file_copy(file.path(path, nms), pkgdir)
+  write_packages(pkgdir, packages$type)
 }
 
 
@@ -41,16 +46,16 @@ commit_message <- function(dat) {
 
 
 update_index <- function(workdir, path) {
-  ## Sort out the final packages lines too.
   if (file.exists(file.path(path, "packages.yml"))) {
     prev <- yaml::read_yaml(file.path(file.path(path, "packages.yml")))
   } else {
     prev <- NULL
   }
 
-  ## This has our final say in what was actually done
-  dat <- yaml::read_yaml(file.path(workdir, "sources", "src", "packages.yml"))
-  yml <- c(prev, lapply(unname(dat), function(x)
+  ## Using the set of packages built as source as our final list
+  dat <- yaml::read_yaml(
+    file.path(workdir, "sources", "packages", "packages.yml"))
+  yml <- c(prev, lapply(unname(dat$packages), function(x)
     x[c("package", "version", "sha256", "ref")]))
   yaml::write_yaml(yml, file.path(path, "packages.yml"))
 }
