@@ -32,7 +32,7 @@ file_copy <- function(from, to) {
 }
 
 
-assert_named <- function (x, unique = FALSE, name = deparse(substitute(x))) {
+assert_named <- function(x, unique = FALSE, name = deparse(substitute(x))) {
   if (is.null(names(x))) {
     stop(sprintf("'%s' must be named", name), call. = FALSE)
   }
