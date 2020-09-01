@@ -7,8 +7,8 @@ gha_source <- function() {
   yaml::write_yaml(packages, file.path(workdir, "src", "packages.yml"))
   build <- any(vlapply(packages, "[[", "build"))
 
-  cat(sprintf("::set-env name=REPOBUILDER_BUILD::%s\n",
-              as.character(build)))
+  writeLines(as.character(build),
+             file.path(workdir, "src", "build"))
 
   if (!build) {
     message("Nothing to update!")
