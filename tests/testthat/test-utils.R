@@ -68,3 +68,24 @@ test_that("file_copy does copy files", {
   file_copy(a, b)
   expect_equal(readLines(b), LETTERS)
 })
+
+
+test_that("write_packages builds package index", {
+  pkg <- tempfile()
+  dir_create(pkg)
+  writeLines(c(
+    "Package: tmp",
+    "Version: 0.0.1",
+    "Author: An Author"),
+    file.path(pkg, "DESCRIPTION"))
+  zip <- pkgbuild::build(pkg, quiet = TRUE)
+
+  path <- tempfile()
+  dir_create(path)
+  file_copy(zip, path)
+
+  write_packages(path, "source")
+  m <- read.dcf(file.path(path, "PACKAGES"))
+  expect_equal(unname(m[, "Package"]), "tmp")
+  expect_equal(unname(m[, "Version"]), "0.0.1")
+})
