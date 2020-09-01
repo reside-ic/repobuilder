@@ -37,7 +37,7 @@ update_site <- function(workdir, dest) {
             vcapply(dat, "[[", "version"),
             substr(vcapply(dat, "[[", "sha256"), 1, 7)))
 
-  gert::git_add(".", repo = dest)
+  gert::git_add(c("packages.yml", "bin", "contrib"), repo = dest)
   gert::git_commit(paste(msg, collapse = "\n"), repo = dest)
 }
 
