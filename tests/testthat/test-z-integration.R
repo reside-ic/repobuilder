@@ -1,4 +1,4 @@
-context("local")
+context("integration")
 
 test_that("can build a local source repo", {
   skip("long running test")

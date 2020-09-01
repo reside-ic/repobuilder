@@ -1,6 +1,7 @@
 gha_source <- function() {
+  config <- read_config("repobuilder.yml")
   prev <- fetch_previous_index(".")
-  rb_build_source("repobuilder.yml", "gha", prev)
+  rb_build_source(config, "gha", prev)
 }
 
 

@@ -43,3 +43,10 @@ test_that("config gets repo spec parsed", {
   expect_equal(dat$packages[[1]]$ref, "user/repo")
   expect_equal(dat$packages[[1]]$type, "github")
 })
+
+
+test_that("read_config", {
+  expect_identical(
+    read_config("repobuilder.yml"),
+    check_config(yaml::read_yaml("repobuilder.yml")))
+})

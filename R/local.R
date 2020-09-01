@@ -1,7 +1,8 @@
-rb_build_source <- function(filename, workdir, prev) {
-  config <- read_config(filename)
+rb_build_source <- function(config, workdir, prev) {
   packages <- download_sources(config$packages, workdir)
   packages <- check_packages_version(packages, prev)
+
+  dir_create(file.path(workdir, "src"))
   yaml::write_yaml(packages, file.path(workdir, "src", "packages.yml"))
   build <- any(vlapply(packages, "[[", "build"))
 
