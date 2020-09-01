@@ -10,8 +10,8 @@ test_that("can prepare library", {
   mock_new_proposal <- mockery::mock(mock_proposal)
 
   packages <- list(
-    list(path = "a"),
-    list(path = "b"))
+    list(path = "a", ref = "user/a"),
+    list(path = "b", ref = "user/b"))
   workdir <- tempfile()
 
   lib <- with_mock(

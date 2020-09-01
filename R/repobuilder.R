@@ -49,7 +49,9 @@ prepare_library <- function(packages, workdir) {
   lib <- normalizePath(lib, mustWork = TRUE)
 
   config <- list(library = lib, dependencies = TRUE)
-  refs <- sprintf("local::%s/%s", workdir, vcapply(packages, "[[", "path"))
+  refs <- unname(vcapply(packages, "[[", "ref"))
+  ## It might be nice to grab the actual local refs here that we
+  ## already have but this causes a dependency conflict.
   proposal <- pkgdepends::new_pkg_installation_proposal(refs, config)
 
   proposal$solve()
