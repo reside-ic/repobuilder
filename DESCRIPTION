@@ -27,4 +27,5 @@ Suggests:
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 Remotes:
+    r-lib/pkgcache,
     r-lib/pkgdepends
